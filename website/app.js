@@ -1,41 +1,45 @@
 /* Global Variables */
 // Personal API Key for OpenWeatherMap API
 const baseURL = "https://api.openweathermap.org/data/2.5/weather?zip=";
-const apiKey = "&appid=688c5e4a9ee0829e062bd9d1858484f3";
+const apiKey = "&appid=688c5e4a9ee0829e062bd9d1858484f3&units=metric";
 // Event listener to add function to existing HTML DOM element
 document.getElementById("generate").addEventListener("click", performAction);
 /* Function called by event listener */
 function performAction(e) {
   const zip = document.getElementById("zip");
   const feelings = document.getElementById("feelings");
-  getApiData(zip.value).then((result) => {
-    var tempCelsius= result.main.temp-273.15;
-     tempCelsius= tempCelsius.toFixed();
-    postData("/setData", {
-      temperature:tempCelsius,
-      data: newDate,
-      userResp: feelings.value,
+  getWeatherApi(zip.value)
+    .then((result) => {
+      postData("/setData", {
+        temperature: result.main.temp,
+        data: newDate,
+        userResp: feelings.value,
+      }).then(() => {
+        updateUI().then(() => {
+          zip.value = "";
+          feelings.value = "";
+        });
+      });
     })
-      .then(() => {
-        updateUI().then(() =>{
-            zip.value="";
-            feelings.value="";
-        })
-       
-      })
-      .catch(error => console.log(error));
-  });
+    .catch((err) => {
+      console.log(err);
+      updateUIError(err);
+    });
 }
 
 /* Function to GET Web API Data*/
-const getApiData = async (zipCode) => {
+const getWeatherApi = async (zipCode) => {
   const response = await fetch(baseURL + zipCode + apiKey);
+  console.log(response);
   try {
     const newData = await response.json();
-    
-    return newData;
+    console.log(newData);
+    if (!response.ok) {
+      return Promise.reject(newData.message);
+    }
+    return Promise.resolve(newData);
   } catch (error) {
-    return error;
+    return Promise.reject(error.message);
   }
 };
 /* Function to POST data */
@@ -51,11 +55,9 @@ const postData = async (url = "", data = {}) => {
 
   try {
     const newData = await response.json();
-    console.log(newData);
-    return newData;
+    return Promise.resolve(newData);
   } catch (error) {
-    console.log("error", error);
-    // appropriately handle the error
+    return Promise.reject(error.message);
   }
 };
 
@@ -73,7 +75,7 @@ const getProjectData = async (url = "") => {
 // Create a new date instance dynamically with JS
 
 let d = new Date();
-let newDate = d.getMonth() + "." + d.getDate() + "." + d.getFullYear();
+var newDate = d.getMonth() + "." + d.getDate() + "." + d.getFullYear();
 
 // TODO
 
@@ -81,14 +83,24 @@ let newDate = d.getMonth() + "." + d.getDate() + "." + d.getFullYear();
  * update Ui => html Render
  */
 const updateUI = async () => {
-  const request = await fetch("/getData");
+ 
+  const date = document.querySelector('#date');
+  const temp = document.querySelector('#temp');
+  const  content = document.querySelector('#content');
+
+  const request = await fetch("/all");
   try {
     const data = await request.json();
-    document.getElementById("date").innerHTML = `📅 Date :${data.data}`;
-    document.getElementById("temp").innerHTML = `&#127777; Temperature :${data.temperature} °C`;
-    document.getElementById("content").innerHTML = `&#128079; Your Feeling :${data.userResp}`;
-    
+    date.textContent  = `📅 Date :${newDate}`;
+    temp.textContent  = '🌡 Temperature :'+ Math.round(data.temperature) +'°C';
+    content.textContent  = `👏 Your Feeling :${data.userResp}`;
   } catch (error) {
-    console.log("error", error);
+    content.content  = `Error :${error}`;
   }
+};
+const updateUIError = (error) => {
+  const  content = document.querySelector('#content');
+  
+  console.log(error);
+  content.textContent  = `Error :${error}`;
 };

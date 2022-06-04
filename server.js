@@ -1,6 +1,6 @@
 // Setup empty JS object to act as endpoint for all routes
 let projectData = {
-  data: "hello",
+  
 };
 // Require Express to run server and routes
 /* Dependencies */
@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 app.use(express.static("website"));
 
 //routes
-app.get("/getData", (req, res) => {
+app.get("/all", (req, res) => {
   res.send(projectData);
 });
 app.post("/setData", (req, res) => {
@@ -32,8 +32,8 @@ app.post("/setData", (req, res) => {
 });
 // Setup Server
 const port = 3000;
-const httpServer = http.createServer(app);
-httpServer.listen(port, async () => {
+
+app.listen(port, async () => {
   console.log(`https://localhost:${port}`);
   //console.log(httpServer.);
 });
